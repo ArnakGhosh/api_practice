@@ -1,2 +1,2 @@
-# api_practice
+# api_practice_flask
 Api codes with flask
