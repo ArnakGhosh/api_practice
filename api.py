@@ -30,7 +30,14 @@ app.config["DEBUG"] = True
 #      'first_sentence': 'Never lie under the shadow of your dreams, until you set yourself free, with no strings attached.',
 #      'published': '1975'}
 # ]
+def db_conn():
+    conn=connect(user='pytest', password='k1t5B&q', host='localhost', port=5432, database='pytestDB', cursor_factory=RealDictCursor)
+    cursr=conn.cursor()
+    return conn, cursr
 
+def db_close_conn(con,cur):
+    cur.close()
+    con.close()
 
 @app.route('/', methods=['GET'])
 def home():
@@ -44,12 +51,10 @@ def apiall():
     qstr=sql.SQL("SELECT * from {};").format(
     sql.Identifier("books")
 )
-    conn=connect(user='pytest', password='k1t5B&q', host='localhost', port=5432, database='pytestDB', cursor_factory=RealDictCursor)
-    cursr=conn.cursor()
+    conn, cursr=db_conn()
     cursr.execute(qstr)
     rec=cursr.fetchall()
-    cursr.close()
-    conn.close()
+    db_close_conn(conn,cursr)
     return json.dumps(rec, indent=2)
 
 @app.route('/api/v1/resources/books/id', methods=['GET'])
@@ -75,12 +80,10 @@ def apiid():
     sql.Identifier("id"),
     sql.Placeholder()
 )
-    conn=connect(user='pytest', password='k1t5B&q', host='localhost', port=5432, database='pytestDB', cursor_factory=RealDictCursor)
-    cursr=conn.cursor()
+    conn, cursr=db_conn()
     cursr.execute(qstr, str(id))
     rec=cursr.fetchall()
-    cursr.close()
-    conn.close()
+    db_close_conn(conn,cursr)
     # Use the jsonify function from Flask to convert our list of
     # Python dictionaries to the JSON format.
     return json.dumps(rec, indent=2)
@@ -106,8 +109,7 @@ def apiyr():
     # Use the jsonify function from Flask to convert our list
     # Python dictionaries to the JSON format.
     # return jsonify(results)
-    conn=connect(user='pytest', password='k1t5B&q', host='localhost', port=5432, database='pytestDB', cursor_factory=RealDictCursor)
-    cursr=conn.cursor()
+    conn, cursr=db_conn()
     qstr=sql.SQL("SELECT * from {} where {} = {};").format(
     sql.Identifier("books"),
     sql.Identifier("published"),
@@ -115,14 +117,12 @@ def apiyr():
 )
     cursr.execute(qstr, [yr])
     rec=cursr.fetchall()
-    cursr.close()
-    conn.close()
+    db_close_conn(conn,cursr)
     return json.dumps(rec, indent=2)
 
 @app.route('/api/v1/resources/books', methods=['GET'])
 def apifilter():
-    conn=connect(user='pytest', password='k1t5B&q', host='localhost', port=5432, database='pytestDB', cursor_factory=RealDictCursor)
-    cursr=conn.cursor()
+    conn, cursr=db_conn()
     args = request.args
     if len(args)!=0:
         idd = args.get('id')
@@ -156,8 +156,7 @@ def apifilter():
         query = sql.SQL(query.as_string(conn)[:-4]) + sql.SQL(' ;')
         cursr.execute(query, filter_arr)
         rec=cursr.fetchall()
-        cursr.close()
-        conn.close()
+        db_close_conn(conn,cursr)
         return json.dumps(rec, indent=2)
     else:
         return redirect(url_for('apiall'))
